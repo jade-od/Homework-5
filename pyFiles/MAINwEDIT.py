@@ -539,7 +539,7 @@ class Ui_MainWindow(object):
 
     def connect(self):
         self.cnx = mysql.connector.connect(user='root',
-                                               password='123456789',
+                                               password='',
                                                host='127.0.0.1',
                                                database='homework04')
         
