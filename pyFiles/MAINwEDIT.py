@@ -674,8 +674,6 @@ class Ui_MainWindow(object):
         self.cnx.commit()
         cursor.close()
 
-
-
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
