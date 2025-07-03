@@ -272,6 +272,15 @@ class Ui_MainWindow(object):
         self.lblTotal.setText(_translate("MainWindow", "Total: "))
         self.lblDate_from.setText(_translate("MainWindow", "Date From: "))
         self.lblDate_to.setText(_translate("MainWindow", "Date To: "))
+
+        item = self.tbl_8.horizontalHeaderItem(0)
+        item.setText(_translate("MainWindow", "Expense Date")) # Keep as is
+        item = self.tbl_8.horizontalHeaderItem(1)
+        item.setText(_translate("MainWindow", "Expense"))      # Keep as is (this is the expense name)
+        item = self.tbl_8.horizontalHeaderItem(2)
+        item.setText(_translate("MainWindow", "Amount"))       # Changed from "sum of category" to "Amount"
+
+        self.btnRefresh.setText(_translate("MainWindow", "Refresh All Expenses"))
         self.tb_main.setTabText(self.tb_main.indexOf(self.tb_reports), _translate("MainWindow", "Reports"))
 
     
@@ -487,40 +496,41 @@ class Ui_MainWindow(object):
     
 
     def refresh_reports(self):
-        cat_map = {}
-        try:
-            cursor = self.cnx.cursor()
-            cursor.execute("SELECT category_ID, category FROM Categories")
-            for cat_id, cat_name in cursor:
-                cat_map[str(cat_id)] = cat_name
-            cursor.close()
-        except mysql.connector.Error as err:
-            QMessageBox.critical(None, "Database Error", f"error refreshing report categories: {err}")
+        self.tbl_8.setRowCount(0) # Clear existing data
+        self.txtTotal.setText("") # Clear total
+
+        if not self.cnx:
+            QMessageBox.critical(None, "Database Error", "Not connected to the database.")
             return
 
-        self.tbl_8.setRowCount(0)
+        total_expenses = 0.0 # Initialize total
 
         try:
             cursor = self.cnx.cursor()
+            # New query to fetch individual expenses
             query = """
-                    SELECT e.category_ID, SUM(e.amount)
-                    FROM Expenses e
-                    GROUP BY e.category_ID
-                    ORDER BY e.category_ID \
-                    """
+                     SELECT expense_date, expense, amount
+                     FROM Expenses
+                     ORDER BY expense_date DESC, expense_ID DESC
+                     """
             cursor.execute(query)
 
-            for category_id_db, total_amount_db in cursor:
+            for expense_date_db, expense_name_db, amount_db in cursor:
                 row = self.tbl_8.rowCount()
                 self.tbl_8.insertRow(row)
-                self.tbl_8.setItem(row, 0,
-                                   QTableWidgetItem(cat_map.get(str(category_id_db), f"Unknown ({category_id_db})")))
-                self.tbl_8.setItem(row, 1, QTableWidgetItem(str(category_id_db)))
-                self.tbl_8.setItem(row, 2, QTableWidgetItem(f"{total_amount_db:.2f}"))
+
+                # Populate columns as desired: Date, Expense Name, Amount
+                self.tbl_8.setItem(row, 0, QTableWidgetItem(str(expense_date_db))) # Column 0: expense date
+                self.tbl_8.setItem(row, 1, QTableWidgetItem(expense_name_db))      # Column 1: expense name
+                self.tbl_8.setItem(row, 2, QTableWidgetItem(f"{amount_db:.2f}"))   # Column 2: amount
+
+                total_expenses += float(amount_db)
 
             cursor.close()
+            self.txtTotal.setText(f"{total_expenses:.2f}") # Display calculated total
+
         except mysql.connector.Error as err:
-            QMessageBox.critical(None, "Database Error", f"Error makign the report: {err}")
+            QMessageBox.critical(None, "Database Error", f"Error refreshing report: {err}")
 
 
 
