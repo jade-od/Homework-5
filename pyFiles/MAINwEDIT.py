@@ -702,7 +702,6 @@ class Ui_MainWindow(object):
         date_from_str = self.dateFrom.date().toString("yyyy-MM-dd")
         date_to_str = self.dateTo.date().toString("yyyy-MM-dd")
 
-        # Call the generic helper method
         self._filter_expenses_by_date_range(date_from_str, date_to_str)
 
     def _filter_expenses_by_date_range(self, start_date_str, end_date_str):
