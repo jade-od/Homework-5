@@ -640,7 +640,7 @@ class Ui_MainWindow(object):
                 self.tbl_04.insertRow(rowCount)
                 self.tbl_04.setItem(rowCount, 0, QTableWidgetItem(str(category_ID)))
                 self.tbl_04.setItem(rowCount, 1, QTableWidgetItem(str(expense_ID)))
-                self.tbl_04.setItem(rowCount, 2, QTableWidgetItem(str(expense_date)))  # date object to string
+                self.tbl_04.setItem(rowCount, 2, QTableWidgetItem(str(expense_date)))  
                 self.tbl_04.setItem(rowCount, 3, QTableWidgetItem(expense_val))
                 self.tbl_04.setItem(rowCount, 4, QTableWidgetItem(f"{amount:.2f}"))
                 self.tbl_04.setItem(rowCount, 5,
@@ -649,7 +649,6 @@ class Ui_MainWindow(object):
         cursor.close()
 
     def insert_exDB(self, a_listValues):
-        # a_listValues: (category_id, expense_date, expense_name_from_dialog, amount, notes)
         if not self.cnx:
             return
         cursor = self.cnx.cursor()
@@ -668,7 +667,6 @@ class Ui_MainWindow(object):
         cursor.close()
 
     def update_exDB(self, a_listValues):
-        # a_listValues: (new_category_id, new_expense_date, new_expense_name_from_dialog, new_amount, new_notes, original_expense_id)
         if not self.cnx: return
         cursor = self.cnx.cursor()
 
@@ -693,7 +691,6 @@ class Ui_MainWindow(object):
         
 
     def delete_exDB(self, a_ID):
-        # a_ID: the expense_ID to delete
         if not self.cnx: return
         cursor = self.cnx.cursor()
         query = "DELETE FROM Expenses WHERE expense_ID = %s"
@@ -702,7 +699,6 @@ class Ui_MainWindow(object):
         cursor.close()
 
     def filter_expenses_by_date(self):
-        # Get dates from QDateEdit widgets
         date_from_str = self.dateFrom.date().toString("yyyy-MM-dd")
         date_to_str = self.dateTo.date().toString("yyyy-MM-dd")
 
@@ -713,8 +709,8 @@ class Ui_MainWindow(object):
         Helper method to filter and display expenses within a specified date range.
         Takes date strings in 'YYYY-MM-DD' format.
         """
-        self.tbl_8.setRowCount(0) # Clear existing data
-        self.txtTotal.setText("") # Clear total
+        self.tbl_8.setRowCount(0) 
+        self.txtTotal.setText("") 
 
         if not self.cnx:
             QMessageBox.critical(None, "Database Error", "Not connected to the database.")
@@ -760,8 +756,8 @@ class Ui_MainWindow(object):
 
     def filter_current_year_expenses(self):
         today = QtCore.QDate.currentDate()
-        first_day_of_year = QtCore.QDate(today.year(), 1, 1) # January 1st of current year
-        last_day_of_year = QtCore.QDate(today.year(), 12, 31) # December 31st of current year
+        first_day_of_year = QtCore.QDate(today.year(), 1, 1) #January 1st of current year
+        last_day_of_year = QtCore.QDate(today.year(), 12, 31) #December 31st of current year
 
         start_date_str = first_day_of_year.toString("yyyy-MM-dd")
         end_date_str = last_day_of_year.toString("yyyy-MM-dd")
@@ -770,8 +766,8 @@ class Ui_MainWindow(object):
 
 
     def filter_expenses_over_hundred(self):
-        self.tbl_8.setRowCount(0) # Clear existing data
-        self.txtTotal.setText("") # Clear total
+        self.tbl_8.setRowCount(0) 
+        self.txtTotal.setText("")
 
         if not self.cnx:
             QMessageBox.critical(None, "Database Error", "Not connected to the database.")
@@ -781,7 +777,6 @@ class Ui_MainWindow(object):
 
         try:
             cursor = self.cnx.cursor()
-            # SQL query to select expenses where amount is greater than 100
             query = """
                      SELECT expense_date, expense, amount
                      FROM Expenses
@@ -794,10 +789,8 @@ class Ui_MainWindow(object):
                 row = self.tbl_8.rowCount()
                 self.tbl_8.insertRow(row)
 
-                # Populate columns: Date, Expense Name, Amount
                 self.tbl_8.setItem(row, 0, QTableWidgetItem(str(expense_date_db)))
                 self.tbl_8.setItem(row, 1, QTableWidgetItem(expense_name_db))
-                # puts amount to 2 decimal places
                 self.tbl_8.setItem(row, 2, QTableWidgetItem(f"{amount_db:.2f}"))
 
                 total_filtered_expenses += float(amount_db)
@@ -831,7 +824,6 @@ class Ui_MainWindow(object):
         cursor = self.cnx.cursor()
 
         #quieries 
-        # If no category is selected, then all expenses
         if selected_cat_id is None:
             query = """SELECT expense_date, expense, amount
                 FROM Expenses
@@ -855,12 +847,10 @@ class Ui_MainWindow(object):
             self.tbl_8.setItem(row, 0, QTableWidgetItem(str(expense_date_db)))
             self.tbl_8.setItem(row, 1, QTableWidgetItem(expense_name_db))
 
-            # puts in 2 decimal places 
             self.tbl_8.setItem(row, 2, QTableWidgetItem(f"{amount_db:.2f}"))
             total += float(amount_db)
 
         cursor.close()
-        # Set the total in the txtTotal field
         self.txtTotal.setText(f"{total:.2f}")
 
 
