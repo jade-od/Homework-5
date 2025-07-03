@@ -567,7 +567,7 @@ class Ui_MainWindow(object):
     #change ps per user
     def connect(self):
         self.cnx = mysql.connector.connect(user='root',
-                                               password='quinnfricko',
+                                               password='123456789',
                                                host='127.0.0.1',
                                                database='homework04')
         
