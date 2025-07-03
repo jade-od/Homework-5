@@ -298,7 +298,9 @@ class Ui_MainWindow(object):
         self.btnEdit_Ex.clicked.connect(self.btnEdit_clicked_ex)
         self.btnDelete_Ex.clicked.connect(self.btnDelete_Ex_clicked)
 
-
+        #Reports Buttons
+        self.btnRefresh.clicked.connect(self.refresh_reports)
+        self.btnDate_Sort.clicked.connect(self.filter_expenses_by_date)
         #refresh reports
         #self.btnNew_Rep.clicked.connect(self.refresh_reports)
 
@@ -307,6 +309,15 @@ class Ui_MainWindow(object):
         if self.cnx:
             self.refresh_catDB()
             self.refresh_exDB()
+
+            # >>> ADD THESE LINES HERE TO SET REPORT TABLE HEADERS <<<
+            self.tbl_8.setHorizontalHeaderItem(0, QtWidgets.QTableWidgetItem("Expense Date"))
+            self.tbl_8.setHorizontalHeaderItem(1, QtWidgets.QTableWidgetItem("Expense"))
+            self.tbl_8.setHorizontalHeaderItem(2, QtWidgets.QTableWidgetItem("Amount"))
+            # >>> END OF ADDED LINES <<<
+
+            # Populate reports tab on startup with all expenses (default view)
+            self.refresh_reports()
 
 
     #########################################################
@@ -683,6 +694,48 @@ class Ui_MainWindow(object):
         cursor.execute(query, (a_ID,))
         self.cnx.commit()
         cursor.close()
+
+    def filter_expenses_by_date(self):
+        self.tbl_8.setRowCount(0) # Clear existing data in the reports table
+        self.txtTotal.setText("") # Clear the total field
+
+        if not self.cnx:
+            QMessageBox.critical(None, "Database Error", "Not connected to the database.")
+            return
+
+        # Get dates from QDateEdit widgets
+        date_from = self.dateFrom.date().toString("yyyy-MM-dd")
+        date_to = self.dateTo.date().toString("yyyy-MM-dd")
+
+        total_filtered_expenses = 0.0
+
+        try:
+            cursor = self.cnx.cursor()
+            # SQL query to select expenses within the specified date range
+            query = """
+                     SELECT expense_date, expense, amount
+                     FROM Expenses
+                     WHERE expense_date BETWEEN %s AND %s
+                     ORDER BY expense_date ASC, expense_ID ASC
+                     """
+            cursor.execute(query, (date_from, date_to))
+
+            for expense_date_db, expense_name_db, amount_db in cursor:
+                row = self.tbl_8.rowCount()
+                self.tbl_8.insertRow(row)
+
+                # Populate tbl_8 columns: Date, Expense Name, Amount
+                self.tbl_8.setItem(row, 0, QTableWidgetItem(str(expense_date_db)))
+                self.tbl_8.setItem(row, 1, QTableWidgetItem(expense_name_db))
+                self.tbl_8.setItem(row, 2, QTableWidgetItem(f"{amount_db:.2f}"))
+
+                total_filtered_expenses += float(amount_db)
+
+            cursor.close()
+            self.txtTotal.setText(f"{total_filtered_expenses:.2f}")
+
+        except mysql.connector.Error as err:
+            QMessageBox.critical(None, "Database Error", f"Error filtering expenses by date: {err}")
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
