@@ -320,6 +320,10 @@ class Ui_MainWindow(object):
             self.refresh_catDB()
             self.refresh_exDB()
             self.refresh_reports()
+            
+            # Category filter set-up
+            self.populate_category_filter()
+            self.cmbCategory_filter.currentIndexChanged.connect(self.filter_by_category)
 
 
     #########################################################
@@ -563,7 +567,7 @@ class Ui_MainWindow(object):
     #change ps per user
     def connect(self):
         self.cnx = mysql.connector.connect(user='root',
-                                               password='123456789',
+                                               password='quinnfricko',
                                                host='127.0.0.1',
                                                database='homework04')
         
@@ -793,6 +797,7 @@ class Ui_MainWindow(object):
                 # Populate columns: Date, Expense Name, Amount
                 self.tbl_8.setItem(row, 0, QTableWidgetItem(str(expense_date_db)))
                 self.tbl_8.setItem(row, 1, QTableWidgetItem(expense_name_db))
+                # puts amount to 2 decimal places
                 self.tbl_8.setItem(row, 2, QTableWidgetItem(f"{amount_db:.2f}"))
 
                 total_filtered_expenses += float(amount_db)
@@ -803,14 +808,60 @@ class Ui_MainWindow(object):
         except mysql.connector.Error as err:
             QMessageBox.critical(None, "Database Error", f"Error filtering expenses > $100: {err}")
 
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
+    #populates category filter combo box similar to the one in the dialog_expenses.py
+    def populate_category_filter(self):
+        self.cmbCategory_filter.clear()
+        self.cmbCategory_filter.addItem("All Categories", None) 
+        cursor = self.cnx.cursor()
+        query = "SELECT category_ID, category FROM Categories ORDER BY category"
+        cursor.execute(query)
 
+        for cat_id, cat_name in cursor:
+            self.cmbCategory_filter.addItem(cat_name, cat_id)  
+        cursor.close()
+
+
+    #filter by Category Combo Box 
+    def filter_by_category(self):
+        self.tbl_8.setRowCount(0) 
+        self.txtTotal.setText("")
+        selected_cat_id = self.cmbCategory_filter.currentData() 
+
+    
+        cursor = self.cnx.cursor()
+
+        #quieries 
+        # If no category is selected, then all expenses
+        if selected_cat_id is None:
+            query = """SELECT expense_date, expense, amount
+                FROM Expenses
+                ORDER BY expense_date DESC, expense_ID DESC """
+            cursor.execute(query)
+        else:
+            query = """
+                SELECT expense_date, expense, amount
+                FROM Expenses
+                WHERE category_ID = %s
+                ORDER BY expense_date DESC, expense_ID DESC"""
+            
+            cursor.execute(query, (selected_cat_id,))
+
+
+        #totals all in the category
+        total = 0.0
+        for expense_date_db, expense_name_db, amount_db in cursor:
+            row = self.tbl_8.rowCount()
+            self.tbl_8.insertRow(row)
+            self.tbl_8.setItem(row, 0, QTableWidgetItem(str(expense_date_db)))
+            self.tbl_8.setItem(row, 1, QTableWidgetItem(expense_name_db))
+
+            # puts in 2 decimal places 
+            self.tbl_8.setItem(row, 2, QTableWidgetItem(f"{amount_db:.2f}"))
+            total += float(amount_db)
+
+        cursor.close()
+        # Set the total in the txtTotal field
+        self.txtTotal.setText(f"{total:.2f}")
 
 
 if __name__ == "__main__":
